@@ -262,18 +262,6 @@
                     Have a project in mind? Let's work together to bring your ideas to life.
                 </p>
 
-                @if(session('success'))
-                    <div class="mb-6 p-4 bg-green-500/10 border border-green-500/50 rounded-lg text-green-600 dark:text-green-400">
-                        {{ session('success') }}
-                    </div>
-                @endif
-
-                @if(session('error'))
-                    <div class="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-600 dark:text-red-400">
-                        {{ session('error') }}
-                    </div>
-                @endif
-
                 <form action="{{route('contact.send')}}" method="POST" class="space-y-6" id="contactForm">
                     @csrf
                     <div class="grid md:grid-cols-2 gap-6">
@@ -326,4 +314,127 @@
             </div>
         </div>
     </section>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-4 right-4 left-4 md:left-auto z-50 space-y-3 max-w-md md:max-w-md mx-auto md:mx-0"></div>
+
+    <!-- Toast Notification Styles and Script -->
+    <style>
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        .toast {
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        .toast.removing {
+            animation: slideOutRight 0.3s ease-in;
+        }
+
+        .toast-progress {
+            animation: progressBar 5s linear;
+        }
+
+        @keyframes progressBar {
+            from {
+                width: 100%;
+            }
+            to {
+                width: 0%;
+            }
+        }
+    </style>
+
+    <script>
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = 'toast relative bg-card border rounded-lg shadow-2xl overflow-hidden backdrop-blur-sm';
+            
+            // Set colors based on type
+            let iconColor, borderColor, bgColor, icon;
+            if (type === 'success') {
+                iconColor = 'text-green-500';
+                borderColor = 'border-green-500/50';
+                bgColor = 'bg-green-500/10';
+                icon = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>`;
+            } else {
+                iconColor = 'text-red-500';
+                borderColor = 'border-red-500/50';
+                bgColor = 'bg-red-500/10';
+                icon = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>`;
+            }
+            
+            toast.innerHTML = `
+                <div class="flex items-start gap-3 p-4 ${borderColor} border-l-4">
+                    <div class="${iconColor} flex-shrink-0 mt-0.5">
+                        ${icon}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-foreground">${type === 'success' ? 'Success!' : 'Error!'}</p>
+                        <p class="text-sm text-muted-foreground mt-1">${message}</p>
+                    </div>
+                    <button onclick="dismissToast(this)" class="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="h-1 ${bgColor}">
+                    <div class="h-full ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} toast-progress"></div>
+                </div>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Auto dismiss after 5 seconds
+            setTimeout(() => {
+                dismissToast(toast);
+            }, 5000);
+        }
+
+        function dismissToast(element) {
+            const toast = element.closest ? element.closest('.toast') : element;
+            toast.classList.add('removing');
+            setTimeout(() => {
+                toast.remove();
+            }, 300);
+        }
+
+        // Show toast on page load if there's a session message
+        document.addEventListener('DOMContentLoaded', function() {
+            @if(session('success'))
+                showToast("{{ session('success') }}", 'success');
+            @endif
+            
+            @if(session('error'))
+                showToast("{{ session('error') }}", 'error');
+            @endif
+        });
+    </script>
 @endsection
