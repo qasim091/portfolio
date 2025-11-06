@@ -69,6 +69,8 @@
                         </option>
                         <option value="image" {{ old('type', $setting->type) === 'image' ? 'selected' : '' }}>Image
                         </option>
+                        <option value="file" {{ old('type', $setting->type) === 'file' ? 'selected' : '' }}>File
+                        </option>
                         <option value="json" {{ old('type', $setting->type) === 'json' ? 'selected' : '' }}>JSON (Multiple Values)</option>
                     </select>
                     <p class="mt-1 text-sm text-muted-foreground">The data type of this setting</p>
@@ -132,6 +134,49 @@
                     </div>
                 </div>
 
+                <!-- File Upload (shown only when type is file) -->
+                <div id="fileField" style="display: {{ $setting->type === 'file' ? 'block' : 'none' }};">
+                    <!-- Current File -->
+                    @if ($setting->type === 'file' && $setting->value)
+                        <div class="mb-4">
+                            <p class="text-sm font-semibold text-foreground mb-2">Current File:</p>
+                            <div class="flex items-center gap-3 p-3 bg-muted/50 rounded-lg border border-border">
+                                <i data-lucide="file" class="w-5 h-5 text-primary"></i>
+                                <a href="{{ asset($setting->value) }}" target="_blank" 
+                                   class="text-sm text-primary hover:underline flex-1">
+                                    {{ basename($setting->value) }}
+                                </a>
+                                <a href="{{ asset($setting->value) }}" download 
+                                   class="text-sm text-muted-foreground hover:text-foreground">
+                                    <i data-lucide="download" class="w-4 h-4"></i>
+                                </a>
+                            </div>
+                        </div>
+                    @endif
+
+                    <label for="file" class="block text-sm font-semibold text-foreground mb-2">
+                        Upload New File
+                    </label>
+                    <input type="file" 
+                           id="file" 
+                           name="file" 
+                           class="w-full px-4 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all @error('file') border-red-500 @enderror">
+                    <p class="mt-1 text-sm text-muted-foreground">Upload any file (Max: 10MB). Leave empty to keep current file.</p>
+                    @error('file')
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                    
+                    <!-- File Info -->
+                    <div id="fileInfo" class="mt-4" style="display: none;">
+                        <p class="text-sm font-semibold text-foreground mb-2">Selected File:</p>
+                        <div class="flex items-center gap-2 p-3 bg-muted/50 rounded-lg border border-border">
+                            <i data-lucide="file" class="w-5 h-5 text-primary"></i>
+                            <span id="fileName" class="text-sm text-foreground"></span>
+                            <span id="fileSize" class="text-xs text-muted-foreground ml-auto"></span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Setting Info -->
                 <div class="bg-muted/50 rounded-lg p-4 border border-border/50">
                     <div class="grid grid-cols-2 gap-4 text-sm">
@@ -183,16 +228,21 @@
             // Toggle fields based on type selection
             document.getElementById('type').addEventListener('change', function() {
                 const imageField = document.getElementById('imageUploadField');
+                const fileField = document.getElementById('fileField');
                 const jsonField = document.getElementById('jsonFields');
                 const valueField = document.querySelector('[name="value"]').closest('div');
 
                 // Hide all special fields first
                 imageField.style.display = 'none';
+                fileField.style.display = 'none';
                 jsonField.style.display = 'none';
                 valueField.style.display = 'block';
 
                 if (this.value === 'image') {
                     imageField.style.display = 'block';
+                    valueField.style.display = 'none';
+                } else if (this.value === 'file') {
+                    fileField.style.display = 'block';
                     valueField.style.display = 'none';
                 } else if (this.value === 'json') {
                     jsonField.style.display = 'block';
@@ -266,11 +316,39 @@
                 }
             });
 
-            // Check on page load
+            // File info display
+            document.getElementById('file').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    document.getElementById('fileName').textContent = file.name;
+                    document.getElementById('fileSize').textContent = formatFileSize(file.size);
+                    document.getElementById('fileInfo').style.display = 'block';
+                    
+                    // Re-initialize Lucide icons
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                }
+            });
+
+            // Format file size helper
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+            }
+
+            // Check on page load (for validation errors)
             window.addEventListener('DOMContentLoaded', function() {
                 const typeSelect = document.getElementById('type');
                 if (typeSelect.value === 'image') {
                     document.getElementById('imageUploadField').style.display = 'block';
+                    const valueField = document.querySelector('[name="value"]').closest('div');
+                    if (valueField) valueField.style.display = 'none';
+                } else if (typeSelect.value === 'file') {
+                    document.getElementById('fileField').style.display = 'block';
                     const valueField = document.querySelector('[name="value"]').closest('div');
                     if (valueField) valueField.style.display = 'none';
                 } else if (typeSelect.value === 'json') {

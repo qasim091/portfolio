@@ -39,7 +39,7 @@
                             class="inline-flex items-center px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md shadow-glow transition-colors">
                             View Projects
                         </a>
-                        <a href="{{ asset('storage/Qasim-Mehmood-CV.pdf') }}"
+                        <a href="{{ asset($webSettings->resume_pdf) }}"
                             class="inline-flex items-center px-6 py-3 border border-primary/50 hover:bg-primary/10 rounded-md transition-colors">
                             <i data-lucide="file-text" class="mr-2 h-5 w-5"></i>
                             Download CV
@@ -286,10 +286,10 @@
                         <textarea id="message" name="message" rows="6" required
                             class="w-full px-4 py-3 bg-card border border-border rounded-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors resize-none">{{ old('message') }}</textarea>
                     </div>
-                    
+
                     <!-- reCAPTCHA -->
                     <div class="g-recaptcha" data-sitekey="{{ env('RECAPTCHA_SITE_KEY') }}"></div>
-                    
+
                     <div class="text-center">
                         <button type="submit"
                             class="inline-flex items-center px-8 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md shadow-glow transition-colors">
@@ -367,11 +367,11 @@
     <script>
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
-            
+
             // Create toast element
             const toast = document.createElement('div');
             toast.className = 'toast relative bg-card border rounded-lg shadow-2xl overflow-hidden backdrop-blur-sm';
-            
+
             // Set colors based on type
             let iconColor, borderColor, bgColor, icon;
             if (type === 'success') {
@@ -389,7 +389,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>`;
             }
-            
+
             toast.innerHTML = `
                 <div class="flex items-start gap-3 p-4 ${borderColor} border-l-4">
                     <div class="${iconColor} flex-shrink-0 mt-0.5">
@@ -409,9 +409,9 @@
                     <div class="h-full ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} toast-progress"></div>
                 </div>
             `;
-            
+
             container.appendChild(toast);
-            
+
             // Auto dismiss after 5 seconds
             setTimeout(() => {
                 dismissToast(toast);
@@ -431,7 +431,7 @@
             @if(session('success'))
                 showToast("{{ session('success') }}", 'success');
             @endif
-            
+
             @if(session('error'))
                 showToast("{{ session('error') }}", 'error');
             @endif

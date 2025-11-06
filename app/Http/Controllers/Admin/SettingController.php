@@ -34,13 +34,19 @@ class SettingController extends Controller
         $rules = [
             'key' => 'required|string|max:255|unique:settings,key',
             'value' => 'nullable|string',
-            'type' => 'required|in:text,email,phone,textarea,url,number,image,json',
+            'type' => 'required|in:text,email,phone,textarea,url,number,image,json,file',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'file' => 'nullable|file|max:10240', // 10MB max
         ];
 
         // Make image required if type is image
         if ($request->type === 'image') {
             $rules['image'] = 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048';
+        }
+
+        // Make file required if type is file
+        if ($request->type === 'file') {
+            $rules['file'] = 'required|file|max:10240';
         }
 
         // Make json_data required if type is json
@@ -64,8 +70,9 @@ class SettingController extends Controller
                 // Get file extension
                 $extension = $image->getClientOriginalExtension() ?: $image->extension() ?: 'jpg';
 
-                // Generate unique filename
-                $filename = time() . '_' . uniqid() . '.' . $extension;
+                // Use key as filename (sanitize it)
+                $sanitizedKey = preg_replace('/[^a-zA-Z0-9_-]/', '_', $request->key);
+                $filename = $sanitizedKey . '.' . $extension;
 
                 // Define storage path
                 $storagePath = storage_path('app/public/settings');
@@ -83,6 +90,37 @@ class SettingController extends Controller
 
             } catch (\Exception $e) {
                 return back()->withErrors(['image' => 'Upload error: ' . $e->getMessage()])->withInput();
+            }
+        }
+
+        // Handle file upload
+        if ($request->hasFile('file') && $request->type === 'file') {
+            $file = $request->file('file');
+
+            try {
+                // Get file extension
+                $extension = $file->getClientOriginalExtension() ?: $file->extension();
+
+                // Use key as filename (sanitize it)
+                $sanitizedKey = preg_replace('/[^a-zA-Z0-9_-]/', '_', $request->key);
+                $filename = $sanitizedKey . '.' . $extension;
+
+                // Define storage path
+                $storagePath = storage_path('app/public/settings');
+
+                // Create directory if it doesn't exist
+                if (!file_exists($storagePath)) {
+                    mkdir($storagePath, 0755, true);
+                }
+
+                // Move the uploaded file
+                $file->move($storagePath, $filename);
+
+                // Set the value to the public path
+                $validated['value'] = '/storage/settings/' . $filename;
+
+            } catch (\Exception $e) {
+                return back()->withErrors(['file' => 'Upload error: ' . $e->getMessage()])->withInput();
             }
         }
 
@@ -120,8 +158,9 @@ class SettingController extends Controller
         $rules = [
             'key' => 'required|string|max:255|unique:settings,key,' . $setting->id,
             'value' => 'nullable|string',
-            'type' => 'required|in:text,email,phone,textarea,url,number,image,json',
+            'type' => 'required|in:text,email,phone,textarea,url,number,image,json,file',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'file' => 'nullable|file|max:10240',
         ];
 
         // Make json_data required if type is json
@@ -150,8 +189,9 @@ class SettingController extends Controller
                 // Get file extension
                 $extension = $image->getClientOriginalExtension() ?: $image->extension() ?: 'jpg';
 
-                // Generate unique filename
-                $filename = time() . '_' . uniqid() . '.' . $extension;
+                // Use key as filename (sanitize it)
+                $sanitizedKey = preg_replace('/[^a-zA-Z0-9_-]/', '_', $request->key);
+                $filename = $sanitizedKey . '.' . $extension;
 
                 // Define storage path
                 $storagePath = storage_path('app/public/settings');
@@ -172,6 +212,45 @@ class SettingController extends Controller
             }
         } elseif ($request->type === 'image' && !$request->hasFile('image')) {
             // If type is image but no new image uploaded, preserve existing value
+            unset($validated['value']); // Don't update the value field
+        }
+
+        // Handle file upload
+        if ($request->hasFile('file') && $request->type === 'file') {
+            try {
+                // Delete old file if exists
+                if ($setting->value && file_exists(public_path($setting->value))) {
+                    unlink(public_path($setting->value));
+                }
+
+                $file = $request->file('file');
+
+                // Get file extension
+                $extension = $file->getClientOriginalExtension() ?: $file->extension();
+
+                // Use key as filename (sanitize it)
+                $sanitizedKey = preg_replace('/[^a-zA-Z0-9_-]/', '_', $request->key);
+                $filename = $sanitizedKey . '.' . $extension;
+
+                // Define storage path
+                $storagePath = storage_path('app/public/settings');
+
+                // Create directory if it doesn't exist
+                if (!file_exists($storagePath)) {
+                    mkdir($storagePath, 0755, true);
+                }
+
+                // Move the uploaded file
+                $file->move($storagePath, $filename);
+
+                // Set the value to the public path
+                $validated['value'] = '/storage/settings/' . $filename;
+
+            } catch (\Exception $e) {
+                return back()->withErrors(['file' => 'Upload error: ' . $e->getMessage()])->withInput();
+            }
+        } elseif ($request->type === 'file' && !$request->hasFile('file')) {
+            // If type is file but no new file uploaded, preserve existing value
             unset($validated['value']); // Don't update the value field
         }
 
