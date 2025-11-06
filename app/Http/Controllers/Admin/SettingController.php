@@ -34,7 +34,7 @@ class SettingController extends Controller
         $rules = [
             'key' => 'required|string|max:255|unique:settings,key',
             'value' => 'nullable|string',
-            'type' => 'required|in:text,email,phone,textarea,url,number,image',
+            'type' => 'required|in:text,email,phone,textarea,url,number,image,json',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ];
 
@@ -43,7 +43,18 @@ class SettingController extends Controller
             $rules['image'] = 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048';
         }
 
+        // Make json_data required if type is json
+        if ($request->type === 'json') {
+            $rules['json_data'] = 'required|array|min:1';
+            $rules['json_data.*'] = 'required|string';
+        }
+
         $validated = $request->validate($rules);
+
+        // Handle JSON type
+        if ($request->type === 'json' && $request->has('json_data')) {
+            $validated['value'] = json_encode(array_values(array_filter($request->json_data)));
+        }
 
         // Handle image upload
         if ($request->hasFile('image') && $request->type === 'image') {
@@ -75,7 +86,11 @@ class SettingController extends Controller
             }
         }
 
-        Setting::create($validated);
+        Setting::create([
+            'key' => $validated['key'],
+            'value' => $validated['value'] ?? null,
+            'type' => $validated['type'],
+        ]);
 
         return redirect()->route('admin.settings.index')
             ->with('success', 'Setting created successfully!');
@@ -102,12 +117,25 @@ class SettingController extends Controller
      */
     public function update(Request $request, Setting $setting)
     {
-        $validated = $request->validate([
+        $rules = [
             'key' => 'required|string|max:255|unique:settings,key,' . $setting->id,
             'value' => 'nullable|string',
-            'type' => 'required|in:text,email,phone,textarea,url,number,image',
+            'type' => 'required|in:text,email,phone,textarea,url,number,image,json',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-        ]);
+        ];
+
+        // Make json_data required if type is json
+        if ($request->type === 'json') {
+            $rules['json_data'] = 'required|array|min:1';
+            $rules['json_data.*'] = 'required|string';
+        }
+
+        $validated = $request->validate($rules);
+
+        // Handle JSON type
+        if ($request->type === 'json' && $request->has('json_data')) {
+            $validated['value'] = json_encode(array_values(array_filter($request->json_data)));
+        }
 
         // Handle image upload
         if ($request->hasFile('image') && $request->type === 'image') {

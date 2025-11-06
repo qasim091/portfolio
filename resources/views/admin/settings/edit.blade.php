@@ -69,9 +69,37 @@
                         </option>
                         <option value="image" {{ old('type', $setting->type) === 'image' ? 'selected' : '' }}>Image
                         </option>
+                        <option value="json" {{ old('type', $setting->type) === 'json' ? 'selected' : '' }}>JSON (Multiple Values)</option>
                     </select>
                     <p class="mt-1 text-sm text-muted-foreground">The data type of this setting</p>
                     @error('type')
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- JSON Fields (shown only when type is json) -->
+                <div id="jsonFields" style="display: {{ $setting->type === 'json' ? 'block' : 'none' }};">
+                    <label class="block text-sm font-semibold text-foreground mb-2">
+                        JSON Keys <span class="text-red-500">*</span>
+                    </label>
+                    <div id="jsonValuesContainer" class="space-y-3">
+                        @if($setting->type === 'json' && $setting->value)
+                            @php
+                                $jsonData = json_decode($setting->value, true) ?? [];
+                            @endphp
+                            @foreach($jsonData as $key)
+                                <!-- Existing JSON keys will be populated by JavaScript -->
+                            @endforeach
+                        @endif
+                    </div>
+                    <button type="button" 
+                            id="addJsonValue"
+                            class="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        <span class="font-medium">Add Key</span>
+                    </button>
+                    <p class="mt-2 text-sm text-muted-foreground">Add multiple keys for this JSON setting</p>
+                    @error('json_data')
                         <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                     @enderror
                 </div>
@@ -147,18 +175,82 @@
 
     @push('scripts')
         <script>
-            // Toggle image upload field based on type selection
+            let jsonValueIndex = 0;
+
+            // Existing JSON data from server
+            const existingJsonData = @json($setting->type === 'json' && $setting->value ? json_decode($setting->value, true) : []);
+
+            // Toggle fields based on type selection
             document.getElementById('type').addEventListener('change', function() {
                 const imageField = document.getElementById('imageUploadField');
+                const jsonField = document.getElementById('jsonFields');
                 const valueField = document.querySelector('[name="value"]').closest('div');
+
+                // Hide all special fields first
+                imageField.style.display = 'none';
+                jsonField.style.display = 'none';
+                valueField.style.display = 'block';
 
                 if (this.value === 'image') {
                     imageField.style.display = 'block';
                     valueField.style.display = 'none';
-                } else {
-                    imageField.style.display = 'none';
-                    valueField.style.display = 'block';
+                } else if (this.value === 'json') {
+                    jsonField.style.display = 'block';
+                    valueField.style.display = 'none';
+                    // Add initial field if none exist
+                    if (document.querySelectorAll('.json-value-item').length === 0) {
+                        addJsonValueField();
+                    }
                 }
+            });
+
+            // Function to add a new JSON key field
+            function addJsonValueField(key = '') {
+                const container = document.getElementById('jsonValuesContainer');
+                const index = jsonValueIndex++;
+                
+                const fieldHtml = `
+                    <div class="json-value-item flex gap-3 items-start" data-index="${index}">
+                        <div class="flex-1">
+                            <input type="text" 
+                                   name="json_data[]" 
+                                   value="${key}"
+                                   class="w-full px-4 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                   placeholder="Enter key (e.g., facebook, twitter, instagram)"
+                                   required>
+                        </div>
+                        <button type="button" 
+                                class="remove-json-value px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all"
+                                onclick="removeJsonValueField(this)">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                `;
+                
+                container.insertAdjacentHTML('beforeend', fieldHtml);
+                
+                // Re-initialize Lucide icons for the new button
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            }
+
+            // Function to remove a JSON key field
+            function removeJsonValueField(button) {
+                const item = button.closest('.json-value-item');
+                const container = document.getElementById('jsonValuesContainer');
+                
+                // Keep at least one field
+                if (container.querySelectorAll('.json-value-item').length > 1) {
+                    item.remove();
+                } else {
+                    alert('At least one key is required for JSON type.');
+                }
+            }
+
+            // Add JSON value button click handler
+            document.getElementById('addJsonValue').addEventListener('click', function() {
+                addJsonValueField();
             });
 
             // Image preview
@@ -181,6 +273,20 @@
                     document.getElementById('imageUploadField').style.display = 'block';
                     const valueField = document.querySelector('[name="value"]').closest('div');
                     if (valueField) valueField.style.display = 'none';
+                } else if (typeSelect.value === 'json') {
+                    document.getElementById('jsonFields').style.display = 'block';
+                    const valueField = document.querySelector('[name="value"]').closest('div');
+                    if (valueField) valueField.style.display = 'none';
+                    
+                    // Populate existing JSON data
+                    if (Array.isArray(existingJsonData) && existingJsonData.length > 0) {
+                        existingJsonData.forEach(key => {
+                            addJsonValueField(key);
+                        });
+                    } else {
+                        // Add at least one empty field
+                        addJsonValueField();
+                    }
                 }
             });
         </script>

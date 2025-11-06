@@ -6,6 +6,15 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProjectController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\SmtpSettingController;
+use App\Http\Controllers\ContactController;
+
+
+
+
+// Contact Form Submission
+Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
+
 
 // Public routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -51,6 +60,15 @@ Route::get('settings/{setting}/edit', [SettingController::class, 'edit'])->name(
 Route::put('settings/{setting}', [SettingController::class, 'update'])->name('settings.update');
 Route::delete('settings/{setting}', [SettingController::class, 'destroy'])->name('settings.destroy');
 Route::get('settings/{setting}', [SettingController::class, 'show'])->name('settings.show');
+
+
+// -------------------- SMTP SETTING ROUTES --------------------
+Route::get('smtp-settings', [SmtpSettingController::class, 'index'])->name('smtp-settings.index');
+Route::get('smtp-settings/create', [SmtpSettingController::class, 'create'])->name('smtp-settings.create');
+Route::post('smtp-settings', [SmtpSettingController::class, 'store'])->name('smtp-settings.store');
+Route::get('smtp-settings/{smtpSetting}/edit', [SmtpSettingController::class, 'edit'])->name('smtp-settings.edit');
+Route::put('smtp-settings/{smtpSetting}', [SmtpSettingController::class, 'update'])->name('smtp-settings.update');
+Route::delete('smtp-settings/{smtpSetting}', [SmtpSettingController::class, 'destroy'])->name('smtp-settings.destroy');
 
 });
 

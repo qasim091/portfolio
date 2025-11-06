@@ -6,7 +6,7 @@ use App\Models\Category;
 use App\Models\Project;
 use App\Models\Setting;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\DB;
 class HomeController extends Controller
 {
     /**
@@ -15,7 +15,7 @@ class HomeController extends Controller
     protected function getWebSettings()
     {
         $settings = Setting::all()->pluck('value', 'key')->toArray();
-        
+
         // Get image and ensure it has proper URL
         $image = $settings['image'] ?? '/img/qasim.jpg';
         // If image starts with / (local path), use asset() helper
@@ -38,9 +38,9 @@ class HomeController extends Controller
 
     public function index()
     {
-        $webSettings = $this->getWebSettings();
+        // $webSettings = $this->getWebSettings();
         // Uncomment to debug: dd($webSettings);
-        
+
         // Get featured projects for the home page
         $projects = Project::with('category')
             ->featured()
@@ -49,8 +49,10 @@ class HomeController extends Controller
             ->get();
 
         // Get web settings (also available globally via SettingsServiceProvider)
-        $webSettings = $this->getWebSettings();
-
+        // $webSettings = $this->getWebSettings();
+        $webSettings = (object) DB::table('settings')->pluck('value', 'key')->toArray();
+        // Decode JSON field for skills
+        $webSettings->skills = json_decode($webSettings->skills, true);
         return view('home', compact('projects', 'webSettings'));
     }
     public function project(Request $request)

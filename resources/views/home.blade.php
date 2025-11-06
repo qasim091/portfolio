@@ -30,8 +30,7 @@
                         </p>
 
                         <p class="text-lg text-muted-foreground max-w-xl">
-                            Crafting immersive digital experiences with cutting-edge web technologies,
-                            3D graphics, and innovative solutions.
+                            {{ $webSettings->meta_description }}
                         </p>
                     </div>
 
@@ -217,29 +216,21 @@
 
                 <div class="space-y-6 text-lg text-muted-foreground">
                     <p>
-                        I'm a passionate full-stack developer with over 5 years of experience building innovative web
-                        applications
-                        and interactive experiences. My expertise spans across modern web technologies, 3D graphics, and
-                        user interface design.
-                    </p>
-                    <p>
-                        I specialize in creating performant, scalable applications using React, Laravel, Node.js, and
-                        Three.js.
-                        My work focuses on delivering exceptional user experiences through clean code and thoughtful design.
+                        {{ $webSettings->about_desc }}
                     </p>
                 </div>
 
                 <div class="grid md:grid-cols-3 gap-6 mt-12">
                     <div class="text-center p-6 bg-card rounded-lg border border-border/50">
-                        <div class="text-4xl font-bold text-primary mb-2">50+</div>
+                        <div class="text-4xl font-bold text-primary mb-2">{{$webSettings->project}}+</div>
                         <div class="text-muted-foreground">Projects Completed</div>
                     </div>
                     <div class="text-center p-6 bg-card rounded-lg border border-border/50">
-                        <div class="text-4xl font-bold text-primary mb-2">30+</div>
+                        <div class="text-4xl font-bold text-primary mb-2">{{$webSettings->client}}+</div>
                         <div class="text-muted-foreground">Happy Clients</div>
                     </div>
                     <div class="text-center p-6 bg-card rounded-lg border border-border/50">
-                        <div class="text-4xl font-bold text-primary mb-2">5+</div>
+                        <div class="text-4xl font-bold text-primary mb-2">{{$webSettings->experience}}+</div>
                         <div class="text-muted-foreground">Years Experience</div>
                     </div>
                 </div>
@@ -247,10 +238,11 @@
                 <div class="mt-12">
                     <h3 class="text-2xl font-bold mb-6 text-center">Skills & Technologies</h3>
                     <div class="flex flex-wrap gap-3 justify-center">
-                        @foreach (['React', 'Laravel', 'Vue.js', 'Node.js', 'Three.js', 'TailwindCSS', 'TypeScript', 'PostgreSQL', 'MongoDB', 'AWS', 'Docker', 'Git'] as $skill)
-                            <span
-                                class="px-4 py-2 bg-primary/10 text-primary rounded-lg border border-primary/20">{{ $skill }}</span>
-                        @endforeach
+                    @foreach ($webSettings->skills as $skill)
+                        <span class="px-4 py-2 bg-primary/10 text-primary rounded-lg border border-primary/20">
+                            {{ $skill }}
+                        </span>
+                    @endforeach
                     </div>
                 </div>
             </div>
@@ -270,7 +262,7 @@
                     Have a project in mind? Let's work together to bring your ideas to life.
                 </p>
 
-                <form action="#" method="POST" class="space-y-6">
+                <form action="{{route('contact.send')}}" method="POST" class="space-y-6">
                     @csrf
                     <div class="grid md:grid-cols-2 gap-6">
                         <div>
