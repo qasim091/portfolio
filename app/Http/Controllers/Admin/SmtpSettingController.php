@@ -156,11 +156,12 @@ class SmtpSettingController extends Controller
         }
         
         // Update runtime config
+        Config::set('mail.default', $data['mail_mailer']);
         Config::set('mail.mailers.smtp.host', $data['mail_host']);
         Config::set('mail.mailers.smtp.port', $data['mail_port']);
+        Config::set('mail.mailers.smtp.encryption', $data['mail_encryption']);
         Config::set('mail.mailers.smtp.username', $data['mail_username']);
         Config::set('mail.mailers.smtp.password', $data['mail_password']);
-        Config::set('mail.mailers.smtp.encryption', $data['mail_encryption']);
         Config::set('mail.from.address', $data['mail_from_address']);
         Config::set('mail.from.name', $data['mail_from_name']);
         

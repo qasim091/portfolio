@@ -262,30 +262,46 @@
                     Have a project in mind? Let's work together to bring your ideas to life.
                 </p>
 
-                <form action="{{route('contact.send')}}" method="POST" class="space-y-6">
+                @if(session('success'))
+                    <div class="mb-6 p-4 bg-green-500/10 border border-green-500/50 rounded-lg text-green-600 dark:text-green-400">
+                        {{ session('success') }}
+                    </div>
+                @endif
+
+                @if(session('error'))
+                    <div class="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-600 dark:text-red-400">
+                        {{ session('error') }}
+                    </div>
+                @endif
+
+                <form action="{{route('contact.send')}}" method="POST" class="space-y-6" id="contactForm">
                     @csrf
                     <div class="grid md:grid-cols-2 gap-6">
                         <div>
                             <label for="name" class="block text-sm font-medium mb-2">Name</label>
-                            <input type="text" id="name" name="name" required
+                            <input type="text" id="name" name="name" value="{{ old('name') }}" required
                                 class="w-full px-4 py-3 bg-card border border-border rounded-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors">
                         </div>
                         <div>
                             <label for="email" class="block text-sm font-medium mb-2">Email</label>
-                            <input type="email" id="email" name="email" required
+                            <input type="email" id="email" name="email" value="{{ old('email') }}" required
                                 class="w-full px-4 py-3 bg-card border border-border rounded-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors">
                         </div>
                     </div>
                     <div>
                         <label for="subject" class="block text-sm font-medium mb-2">Subject</label>
-                        <input type="text" id="subject" name="subject" required
+                        <input type="text" id="subject" name="subject" value="{{ old('subject') }}" required
                             class="w-full px-4 py-3 bg-card border border-border rounded-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors">
                     </div>
                     <div>
                         <label for="message" class="block text-sm font-medium mb-2">Message</label>
                         <textarea id="message" name="message" rows="6" required
-                            class="w-full px-4 py-3 bg-card border border-border rounded-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors resize-none"></textarea>
+                            class="w-full px-4 py-3 bg-card border border-border rounded-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors resize-none">{{ old('message') }}</textarea>
                     </div>
+                    
+                    <!-- reCAPTCHA -->
+                    <div class="g-recaptcha" data-sitekey="{{ env('RECAPTCHA_SITE_KEY') }}"></div>
+                    
                     <div class="text-center">
                         <button type="submit"
                             class="inline-flex items-center px-8 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md shadow-glow transition-colors">
