@@ -40,8 +40,9 @@
                             View Projects
                         </a>
                         <a href="{{ asset($webSettings->resume_pdf) }}"
+                            download
                             class="inline-flex items-center px-6 py-3 border border-primary/50 hover:bg-primary/10 rounded-md transition-colors">
-                            <i data-lucide="file-text" class="mr-2 h-5 w-5"></i>
+                            <i data-lucide="download" class="mr-2 h-5 w-5"></i>
                             Download CV
                         </a>
                     </div>
@@ -85,7 +86,7 @@
                             class="relative w-full h-full rounded-full border-2 border-primary/30 flex items-center justify-center backdrop-blur-sm">
 
                             <!-- Profile Image -->
-                            <img src="{{ $webSettings->image }}" alt="{{ $webSettings->name ?? 'Profile Image' }}"
+                            <img src="{{ asset($webSettings->image) }}" alt="{{ $webSettings->name ?? 'Profile Image' }}"
                                 class="w-48 h-48 rounded-full object-cover mx-auto border-4 border-primary shadow-glow-lg transition-transform hover:scale-105 duration-300 z-10">
 
                             <!-- Floating Tech Icons -->
@@ -237,12 +238,35 @@
 
                 <div class="mt-12">
                     <h3 class="text-2xl font-bold mb-6 text-center">Skills & Technologies</h3>
-                    <div class="flex flex-wrap gap-3 justify-center">
-                    @foreach ($webSettings->skills as $skill)
-                        <span class="px-4 py-2 bg-primary/10 text-primary rounded-lg border border-primary/20">
-                            {{ $skill }}
-                        </span>
-                    @endforeach
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                        @foreach ($webSettings->skills as $skill)
+                            <div class="group">
+                                <!-- Skill Header -->
+                                <div class="flex flex-col items-center text-center mb-3">
+                                    <!-- Icon -->
+                                    <div class="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors mb-3">
+                                        <i data-lucide="{{ $skill['icon'] }}" class="w-8 h-8 text-primary"></i>
+                                    </div>
+                                    <!-- Skill Name -->
+                                    <span class="text-base font-semibold text-foreground mb-2">{{ $skill['name'] }}</span>
+                                    <!-- Percentage -->
+                                    <span class="text-2xl font-bold text-primary">{{ $skill['percentage'] }}%</span>
+                                </div>
+
+                                <!-- Progress Bar -->
+                                <div class="relative h-3 bg-muted rounded-full overflow-hidden">
+                                    <!-- Gradient Progress -->
+                                    <div class="absolute inset-0 bg-gradient-to-r from-primary via-purple-500 to-pink-500 rounded-full transition-all duration-1000 ease-out"
+                                         style="width: {{ $skill['percentage'] }}%"
+                                         data-percentage="{{ $skill['percentage'] }}">
+                                    </div>
+                                    <!-- Glow Effect -->
+                                    <div class="absolute inset-0 bg-gradient-to-r from-primary/50 via-purple-500/50 to-pink-500/50 rounded-full blur-sm opacity-50 transition-all duration-1000 ease-out"
+                                         style="width: {{ $skill['percentage'] }}%">
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
             </div>
@@ -300,15 +324,15 @@
                 </form>
 
                 <div class="mt-12 flex justify-center gap-6">
-                    <a href="mailto:alex@example.com"
+                    <a href="mailto:{{$webSettings->contact_email}}"
                         class="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
                         <i data-lucide="mail" class="w-5 h-5"></i>
-                        alex@example.com
+                        {{$webSettings->contact_email}}
                     </a>
-                    <a href="tel:+1234567890"
+                    <a href="tel:{{$webSettings->whatsapp}}"
                         class="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
                         <i data-lucide="phone" class="w-5 h-5"></i>
-                        +1 (234) 567-890
+                        {{$webSettings->whatsapp}}
                     </a>
                 </div>
             </div>
@@ -436,5 +460,39 @@
                 showToast("{{ session('error') }}", 'error');
             @endif
         });
+
+        // Animate skill progress bars on scroll
+        const observerOptions = {
+            threshold: 0.2,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const animateProgressBar = (entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const progressBars = entry.target.querySelectorAll('[data-percentage]');
+                    progressBars.forEach((bar, index) => {
+                        setTimeout(() => {
+                            bar.style.width = bar.dataset.percentage + '%';
+                        }, index * 100); // Stagger animation
+                    });
+                    observer.unobserve(entry.target);
+                }
+            });
+        };
+
+        const observer = new IntersectionObserver(animateProgressBar, observerOptions);
+
+        // Observe the skills section
+        const skillsSection = document.querySelector('.grid.max-w-6xl');
+        if (skillsSection) {
+            // Initially set all progress bars to 0
+            const progressBars = skillsSection.querySelectorAll('[data-percentage]');
+            progressBars.forEach(bar => {
+                bar.style.width = '0%';
+            });
+
+            observer.observe(skillsSection);
+        }
     </script>
 @endsection

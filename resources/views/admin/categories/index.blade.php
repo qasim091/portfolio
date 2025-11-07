@@ -125,11 +125,11 @@
                                     </a>
                                     <form action="{{ route('admin.categories.destroy', $category) }}" 
                                           method="POST" 
-                                          class="inline"
-                                          onsubmit="return confirm('Are you sure you want to delete this category?');">
+                                          class="inline delete-form">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" 
+                                        <button type="button" 
+                                                onclick="showDeleteModal(this.closest('form'), '{{ $category->name }}')"
                                                 class="p-2 rounded-lg hover:bg-red-500/10 transition-colors" 
                                                 title="Delete">
                                             <i data-lucide="trash-2" class="w-4 h-4 text-red-600 dark:text-red-400"></i>
@@ -164,5 +164,12 @@
             </div>
         @endif
     </div>
+
+    @include('admin.components.delete-modal', [
+        'title' => 'Delete Category',
+        'message' => 'Are you sure you want to delete this category?',
+        'warning' => 'All projects in this category will remain but will be uncategorized.',
+        'buttonText' => 'Delete Category'
+    ])
 </div>
 @endsection

@@ -166,11 +166,11 @@
                                     </a>
                                     <form action="{{ route('admin.projects.destroy', $project) }}"
                                           method="POST"
-                                          class="inline"
-                                          onsubmit="return confirm('Are you sure you want to delete this project?');">
+                                          class="inline delete-form">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit"
+                                        <button type="button"
+                                                onclick="showDeleteModal(this.closest('form'), '{{ $project->title }}')"
                                                 class="p-2 rounded-lg hover:bg-red-500/10 transition-colors"
                                                 title="Delete">
                                             <i data-lucide="trash-2" class="w-4 h-4 text-red-600 dark:text-red-400"></i>
@@ -205,5 +205,12 @@
             </div>
         @endif
     </div>
+
+    @include('admin.components.delete-modal', [
+        'title' => 'Delete Project',
+        'message' => 'Are you sure you want to delete this project?',
+        'warning' => 'All project data including images and details will be permanently removed.',
+        'buttonText' => 'Delete Project'
+    ])
 </div>
 @endsection

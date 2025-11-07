@@ -4,7 +4,7 @@
 @section('page-title', 'Website Settings')
 
 @section('header-actions')
-    <a href="{{ route('admin.settings.create') }}" 
+    <a href="{{ route('admin.settings.create') }}"
        class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all shadow-glow">
         <i data-lucide="plus" class="w-4 h-4"></i>
         <span class="font-medium">Add Setting</span>
@@ -14,171 +14,232 @@
 @section('content')
 <div class="space-y-6">
     <!-- Success Message -->
-    @if(session('success'))
+    {{-- @if(session('success'))
         <div class="bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 px-4 py-3 rounded-lg flex items-center gap-3">
             <i data-lucide="check-circle" class="w-5 h-5"></i>
             <span>{{ session('success') }}</span>
         </div>
+    @endif --}}
+
+    @php
+        // Group settings by category
+        $grouped = [
+            'general' => [
+                'title' => 'General Website Settings',
+                'icon' => 'globe',
+                'color' => 'blue',
+                'keys' => ['site_name', 'site_tagline', 'meta_description']
+            ],
+            'profile' => [
+                'title' => 'Profile & Documents',
+                'icon' => 'user',
+                'color' => 'purple',
+                'keys' => ['name', 'image', 'resume_pdf', 'about_desc']
+            ],
+            'contact' => [
+                'title' => 'Contact Information',
+                'icon' => 'mail',
+                'color' => 'green',
+                'keys' => ['contact_email', 'whatsapp']
+            ],
+            'social' => [
+                'title' => 'Social Media Links',
+                'icon' => 'share-2',
+                'color' => 'pink',
+                'keys' => ['github_url', 'linkedin_url']
+            ],
+            'stats' => [
+                'title' => 'Statistics & Metrics',
+                'icon' => 'bar-chart',
+                'color' => 'orange',
+                'keys' => ['client', 'project', 'experience']
+            ],
+            'skills' => [
+                'title' => 'Skills & Technologies',
+                'icon' => 'code-2',
+                'color' => 'indigo',
+                'keys' => ['skills']
+            ],
+        ];
+    @endphp
+
+    <!-- Settings Groups -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        @foreach($grouped as $groupKey => $group)
+            @php
+                $groupSettings = $settings->whereIn('key', $group['keys']);
+            @endphp
+
+            @if($groupSettings->count() > 0)
+                <div class="bg-card rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-all">
+                    <!-- Card Header -->
+                    <div class="p-6 border-b border-border/50">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-lg bg-{{ $group['color'] }}-500/10 flex items-center justify-center">
+                                <i data-lucide="{{ $group['icon'] }}" class="w-6 h-6 text-{{ $group['color'] }}-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-foreground">{{ $group['title'] }}</h3>
+                                <p class="text-sm text-muted-foreground">{{ $groupSettings->count() }} setting(s)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card Body -->
+                    <div class="p-6 space-y-4">
+                        @foreach($groupSettings as $setting)
+                            <div class="group/item">
+                                <div class="flex items-start justify-between gap-4">
+                                    <div class="flex-1 min-w-0">
+                                        <label class="block text-sm font-medium text-foreground mb-2">
+                                            {{ ucwords(str_replace('_', ' ', $setting->key)) }}
+                                            <span class="ml-2 text-xs text-muted-foreground">({{ $setting->type }})</span>
+                                        </label>
+
+                                        @if($setting->type === 'image' && $setting->value)
+                                            <div class="flex items-center gap-3">
+                                                <img src="{{ asset($setting->value) }}" alt="{{ $setting->key }}"
+                                                     class="h-20 w-20 object-cover rounded-lg border-2 border-border">
+                                                <div class="text-sm text-muted-foreground">
+                                                    <p class="font-medium text-foreground">Current Image</p>
+                                                    <p class="text-xs">{{ basename($setting->value) }}</p>
+                                                </div>
+                                            </div>
+                                        @elseif($setting->type === 'file' && $setting->value)
+                                            <div class="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+                                                <i data-lucide="file" class="w-5 h-5 text-primary"></i>
+                                                <div class="flex-1">
+                                                    <p class="text-sm font-medium text-foreground">{{ basename($setting->value) }}</p>
+                                                    <a href="{{ asset($setting->value) }}" download
+                                                       class="text-xs text-primary hover:underline">
+                                                        Download File
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        @elseif($setting->type === 'json')
+                                            @php
+                                                $jsonData = json_decode($setting->value, true);
+                                                $isSkills = !empty($jsonData) && isset($jsonData[0]['name']);
+                                            @endphp
+                                            @if($isSkills)
+                                                <div class="text-sm text-muted-foreground">
+                                                    <p class="font-medium text-foreground mb-1">{{ count($jsonData) }} Skills</p>
+                                                    <div class="flex flex-wrap gap-1">
+                                                        @foreach(array_slice($jsonData, 0, 3) as $skill)
+                                                            <span class="px-2 py-1 bg-primary/10 text-primary rounded text-xs">
+                                                                {{ $skill['name'] }}
+                                                            </span>
+                                                        @endforeach
+                                                        @if(count($jsonData) > 3)
+                                                            <span class="px-2 py-1 bg-muted text-muted-foreground rounded text-xs">
+                                                                +{{ count($jsonData) - 3 }} more
+                                                            </span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            @else
+                                                <p class="text-sm text-muted-foreground">{{ count($jsonData) }} items</p>
+                                            @endif
+                                        @elseif($setting->type === 'textarea')
+                                            <p class="text-sm text-foreground line-clamp-2">{{ $setting->value }}</p>
+                                        @else
+                                            <p class="text-sm text-foreground font-medium">{{ $setting->value ?: '-' }}</p>
+                                        @endif
+                                    </div>
+
+                                    <!-- Actions -->
+                                    <div class="flex items-center gap-2">
+                                        <a href="{{ route('admin.settings.edit', $setting) }}"
+                                           class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-lg transition-all border border-blue-500/20 hover:border-blue-500/40">
+                                            <i data-lucide="edit" class="w-3.5 h-3.5"></i>
+                                            <span class="text-xs font-medium">Edit</span>
+                                        </a>
+                                        <form action="{{ route('admin.settings.destroy', $setting) }}"
+                                              method="POST"
+                                              class="inline delete-form">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="button"
+                                                    onclick="showDeleteModal(this.closest('form'), '{{ ucwords(str_replace('_', ' ', $setting->key)) }}')"
+                                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg transition-all border border-red-500/20 hover:border-red-500/40">
+                                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                                <span class="text-xs font-medium">Delete</span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+        @endforeach
+    </div>
+
+    <!-- Other Settings (Not in groups) -->
+    @php
+        $allGroupedKeys = collect($grouped)->pluck('keys')->flatten()->toArray();
+        $otherSettings = $settings->whereNotIn('key', $allGroupedKeys);
+    @endphp
+
+    @if($otherSettings->count() > 0)
+        <div class="bg-card rounded-xl border border-border/50 shadow-sm">
+            <div class="p-6 border-b border-border/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-lg bg-gray-500/10 flex items-center justify-center">
+                        <i data-lucide="settings" class="w-6 h-6 text-gray-600"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-foreground">Other Settings</h3>
+                        <p class="text-sm text-muted-foreground">{{ $otherSettings->count() }} setting(s)</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6 space-y-4">
+                @foreach($otherSettings as $setting)
+                    <div class="group/item">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="flex-1 min-w-0">
+                                <label class="block text-sm font-medium text-foreground mb-2">
+                                    {{ ucwords(str_replace('_', ' ', $setting->key)) }}
+                                    <span class="ml-2 text-xs text-muted-foreground">({{ $setting->type }})</span>
+                                </label>
+                                <p class="text-sm text-foreground">{{ $setting->value ?: '-' }}</p>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <a href="{{ route('admin.settings.edit', $setting) }}"
+                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-lg transition-all border border-blue-500/20 hover:border-blue-500/40">
+                                    <i data-lucide="edit" class="w-3.5 h-3.5"></i>
+                                    <span class="text-xs font-medium">Edit</span>
+                                </a>
+                                <form action="{{ route('admin.settings.destroy', $setting) }}"
+                                      method="POST"
+                                      class="inline delete-form">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="button"
+                                            onclick="showDeleteModal(this.closest('form'), '{{ ucwords(str_replace('_', ' ', $setting->key)) }}')"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg transition-all border border-red-500/20 hover:border-red-500/40">
+                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                        <span class="text-xs font-medium">Delete</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
     @endif
 
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-card rounded-xl p-6 border border-border/50 shadow-sm hover:shadow-md transition-shadow">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-muted-foreground mb-1">Total Settings</p>
-                    <p class="text-3xl font-bold">{{ $settings->total() }}</p>
-                </div>
-                <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <i data-lucide="settings" class="w-6 h-6 text-primary"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-card rounded-xl p-6 border border-border/50 shadow-sm hover:shadow-md transition-shadow">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-muted-foreground mb-1">Contact Settings</p>
-                    <p class="text-3xl font-bold">{{ $settings->filter(fn($s) => str_contains($s->key, 'contact'))->count() }}</p>
-                </div>
-                <div class="w-12 h-12 rounded-lg bg-secondary/10 flex items-center justify-center">
-                    <i data-lucide="mail" class="w-6 h-6 text-secondary"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-card rounded-xl p-6 border border-border/50 shadow-sm hover:shadow-md transition-shadow">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-muted-foreground mb-1">Social Links</p>
-                    <p class="text-3xl font-bold">{{ $settings->filter(fn($s) => str_contains($s->key, 'url'))->count() }}</p>
-                </div>
-                <div class="w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center">
-                    <i data-lucide="share-2" class="w-6 h-6 text-accent"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Settings Table -->
-    <div class="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-muted/50 border-b border-border/50">
-                    <tr>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            Key
-                        </th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            Value
-                        </th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            Type
-                        </th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            Updated
-                        </th>
-                        <th class="px-6 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            Actions
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-border/50">
-                    @forelse($settings as $setting)
-                        <tr class="hover:bg-muted/30 transition-colors">
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-2">
-                                    <code class="px-2 py-1 bg-muted rounded text-sm font-mono text-foreground">
-                                        {{ $setting->key }}
-                                    </code>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                @if($setting->type === 'image' && $setting->value)
-                                    <img src="{{ $setting->value }}" alt="{{ $setting->key }}" class="h-12 w-12 object-cover rounded border border-border">
-                                @else
-                                    <p class="text-sm text-foreground max-w-md truncate" title="{{ $setting->value }}">
-                                        {{ $setting->value ?: '-' }}
-                                    </p>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold 
-                                    {{ $setting->type === 'email' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' : '' }}
-                                    {{ $setting->type === 'phone' ? 'bg-green-500/10 text-green-600 dark:text-green-400' : '' }}
-                                    {{ $setting->type === 'url' ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400' : '' }}
-                                    {{ $setting->type === 'text' ? 'bg-gray-500/10 text-gray-600 dark:text-gray-400' : '' }}
-                                    {{ $setting->type === 'textarea' ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400' : '' }}
-                                    {{ $setting->type === 'number' ? 'bg-pink-500/10 text-pink-600 dark:text-pink-400' : '' }}
-                                    {{ $setting->type === 'image' ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' : '' }}">
-                                    @if($setting->type === 'email')
-                                        <i data-lucide="mail" class="w-3 h-3"></i>
-                                    @elseif($setting->type === 'phone')
-                                        <i data-lucide="phone" class="w-3 h-3"></i>
-                                    @elseif($setting->type === 'url')
-                                        <i data-lucide="link" class="w-3 h-3"></i>
-                                    @elseif($setting->type === 'textarea')
-                                        <i data-lucide="align-left" class="w-3 h-3"></i>
-                                    @elseif($setting->type === 'number')
-                                        <i data-lucide="hash" class="w-3 h-3"></i>
-                                    @elseif($setting->type === 'image')
-                                        <i data-lucide="image" class="w-3 h-3"></i>
-                                    @else
-                                        <i data-lucide="type" class="w-3 h-3"></i>
-                                    @endif
-                                    {{ ucfirst($setting->type) }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                                {{ $setting->updated_at->format('M d, Y') }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right">
-                                <div class="flex items-center justify-end gap-2">
-                                    <a href="{{ route('admin.settings.edit', $setting) }}" 
-                                       class="p-2 rounded-lg hover:bg-muted transition-colors" 
-                                       title="Edit">
-                                        <i data-lucide="edit" class="w-4 h-4 text-muted-foreground"></i>
-                                    </a>
-                                    <form action="{{ route('admin.settings.destroy', $setting) }}" 
-                                          method="POST" 
-                                          class="inline"
-                                          onsubmit="return confirm('Are you sure you want to delete this setting?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" 
-                                                class="p-2 rounded-lg hover:bg-red-500/10 transition-colors" 
-                                                title="Delete">
-                                            <i data-lucide="trash-2" class="w-4 h-4 text-red-600 dark:text-red-400"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="px-6 py-12 text-center">
-                                <div class="flex flex-col items-center justify-center">
-                                    <div class="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
-                                        <i data-lucide="settings" class="w-8 h-8 text-muted-foreground"></i>
-                                    </div>
-                                    <p class="text-muted-foreground mb-2">No settings found</p>
-                                    <a href="{{ route('admin.settings.create') }}" 
-                                       class="text-primary hover:text-primary/80 font-medium">
-                                        Create your first setting
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        @if($settings->hasPages())
-            <div class="px-6 py-4 border-t border-border/50">
-                {{ $settings->links() }}
-            </div>
-        @endif
-    </div>
+    @include('admin.components.delete-modal', [
+        'title' => 'Delete Setting',
+        'message' => 'Are you sure you want to delete this setting?',
+        'warning' => 'All data associated with this setting will be permanently removed.',
+        'buttonText' => 'Delete Setting'
+    ])
 </div>
+
 @endsection

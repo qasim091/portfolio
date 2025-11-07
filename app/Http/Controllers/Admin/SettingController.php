@@ -51,15 +51,39 @@ class SettingController extends Controller
 
         // Make json_data required if type is json
         if ($request->type === 'json') {
-            $rules['json_data'] = 'required|array|min:1';
-            $rules['json_data.*'] = 'required|string';
+            // Check if it's skills type (has percentage field)
+            if ($request->has('skill_names')) {
+                $rules['skill_names'] = 'required|array|min:1';
+                $rules['skill_names.*'] = 'required|string';
+                $rules['skill_percentages'] = 'required|array|min:1';
+                $rules['skill_percentages.*'] = 'required|integer|min:0|max:100';
+                $rules['skill_icons'] = 'required|array|min:1';
+                $rules['skill_icons.*'] = 'required|string';
+            } else {
+                $rules['json_data'] = 'required|array|min:1';
+                $rules['json_data.*'] = 'required|string';
+            }
         }
 
         $validated = $request->validate($rules);
 
         // Handle JSON type
-        if ($request->type === 'json' && $request->has('json_data')) {
-            $validated['value'] = json_encode(array_values(array_filter($request->json_data)));
+        if ($request->type === 'json') {
+            if ($request->has('skill_names')) {
+                // Handle skills with name, percentage, and icon
+                $skills = [];
+                foreach ($request->skill_names as $index => $name) {
+                    $skills[] = [
+                        'name' => $name,
+                        'percentage' => (int) $request->skill_percentages[$index],
+                        'icon' => $request->skill_icons[$index],
+                    ];
+                }
+                $validated['value'] = json_encode($skills);
+            } elseif ($request->has('json_data')) {
+                // Handle simple JSON array
+                $validated['value'] = json_encode(array_values(array_filter($request->json_data)));
+            }
         }
 
         // Handle image upload
@@ -165,15 +189,39 @@ class SettingController extends Controller
 
         // Make json_data required if type is json
         if ($request->type === 'json') {
-            $rules['json_data'] = 'required|array|min:1';
-            $rules['json_data.*'] = 'required|string';
+            // Check if it's skills type (has percentage field)
+            if ($request->has('skill_names')) {
+                $rules['skill_names'] = 'required|array|min:1';
+                $rules['skill_names.*'] = 'required|string';
+                $rules['skill_percentages'] = 'required|array|min:1';
+                $rules['skill_percentages.*'] = 'required|integer|min:0|max:100';
+                $rules['skill_icons'] = 'required|array|min:1';
+                $rules['skill_icons.*'] = 'required|string';
+            } else {
+                $rules['json_data'] = 'required|array|min:1';
+                $rules['json_data.*'] = 'required|string';
+            }
         }
 
         $validated = $request->validate($rules);
 
         // Handle JSON type
-        if ($request->type === 'json' && $request->has('json_data')) {
-            $validated['value'] = json_encode(array_values(array_filter($request->json_data)));
+        if ($request->type === 'json') {
+            if ($request->has('skill_names')) {
+                // Handle skills with name, percentage, and icon
+                $skills = [];
+                foreach ($request->skill_names as $index => $name) {
+                    $skills[] = [
+                        'name' => $name,
+                        'percentage' => (int) $request->skill_percentages[$index],
+                        'icon' => $request->skill_icons[$index],
+                    ];
+                }
+                $validated['value'] = json_encode($skills);
+            } elseif ($request->has('json_data')) {
+                // Handle simple JSON array
+                $validated['value'] = json_encode(array_values(array_filter($request->json_data)));
+            }
         }
 
         // Handle image upload

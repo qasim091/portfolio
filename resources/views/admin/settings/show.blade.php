@@ -138,10 +138,11 @@
         <div class="px-6 py-4 bg-muted/50 border-t border-border/50 flex items-center justify-between">
             <form action="{{ route('admin.settings.destroy', $setting) }}" 
                   method="POST"
-                  onsubmit="return confirm('Are you sure you want to delete this setting?');">
+                  class="delete-form">
                 @csrf
                 @method('DELETE')
-                <button type="submit" 
+                <button type="button" 
+                        onclick="showDeleteModal(this.closest('form'), '{{ ucwords(str_replace('_', ' ', $setting->key)) }}')"
                         class="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-500/20 transition-all">
                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                     <span class="font-medium">Delete Setting</span>
@@ -154,5 +155,12 @@
             </a>
         </div>
     </div>
+
+    @include('admin.components.delete-modal', [
+        'title' => 'Delete Setting',
+        'message' => 'Are you sure you want to delete this setting?',
+        'warning' => 'This setting will be permanently removed from the system.',
+        'buttonText' => 'Delete Setting'
+    ])
 </div>
 @endsection

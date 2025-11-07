@@ -77,7 +77,19 @@
                 @enderror
             </div>
 
-            <!-- JSON Fields (shown only when type is json) -->
+            <!-- JSON Type Selection -->
+            <div id="jsonTypeSelection" style="display: none;" class="mb-6">
+                <label class="block text-sm font-semibold text-foreground mb-2">
+                    JSON Type <span class="text-red-500">*</span>
+                </label>
+                <select id="jsonType" class="w-full px-4 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                    <option value="simple">Simple List (e.g., social links)</option>
+                    <option value="skills">Skills (with percentage & icon)</option>
+                </select>
+                <p class="mt-1 text-sm text-muted-foreground">Choose the type of JSON data structure</p>
+            </div>
+
+            <!-- Simple JSON Fields -->
             <div id="jsonFields" style="display: none;">
                 <label class="block text-sm font-semibold text-foreground mb-2">
                     JSON Keys <span class="text-red-500">*</span>
@@ -93,6 +105,26 @@
                 </button>
                 <p class="mt-2 text-sm text-muted-foreground">Add multiple keys for this JSON setting</p>
                 @error('json_data')
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- Skills JSON Fields -->
+            <div id="skillsFields" style="display: none;">
+                <label class="block text-sm font-semibold text-foreground mb-2">
+                    Skills <span class="text-red-500">*</span>
+                </label>
+                <div id="skillsContainer" class="space-y-4">
+                    <!-- Skill items will be added here dynamically -->
+                </div>
+                <button type="button" 
+                        id="addSkill"
+                        class="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    <span class="font-medium">Add Skill</span>
+                </button>
+                <p class="mt-2 text-sm text-muted-foreground">Add skills with name, percentage (0-100), and Lucide icon name</p>
+                @error('skill_names')
                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
             </div>
@@ -177,18 +209,23 @@
 @push('scripts')
 <script>
     let jsonValueIndex = 0;
+    let skillIndex = 0;
 
     // Toggle fields based on type selection
     document.getElementById('type').addEventListener('change', function() {
         const imageField = document.getElementById('imageUploadField');
         const fileField = document.getElementById('fileField');
+        const jsonTypeSelection = document.getElementById('jsonTypeSelection');
         const jsonField = document.getElementById('jsonFields');
+        const skillsField = document.getElementById('skillsFields');
         const valueField = document.querySelector('[name="value"]').closest('div');
         
         // Hide all special fields first
         imageField.style.display = 'none';
         fileField.style.display = 'none';
+        jsonTypeSelection.style.display = 'none';
         jsonField.style.display = 'none';
+        skillsField.style.display = 'none';
         valueField.style.display = 'block';
         
         if (this.value === 'image') {
@@ -198,11 +235,31 @@
             fileField.style.display = 'block';
             valueField.style.display = 'none';
         } else if (this.value === 'json') {
-            jsonField.style.display = 'block';
+            jsonTypeSelection.style.display = 'block';
             valueField.style.display = 'none';
+            // Trigger JSON type change
+            document.getElementById('jsonType').dispatchEvent(new Event('change'));
+        }
+    });
+
+    // Handle JSON type selection
+    document.getElementById('jsonType').addEventListener('change', function() {
+        const jsonField = document.getElementById('jsonFields');
+        const skillsField = document.getElementById('skillsFields');
+        
+        if (this.value === 'simple') {
+            jsonField.style.display = 'block';
+            skillsField.style.display = 'none';
             // Add initial field if none exist
             if (document.querySelectorAll('.json-value-item').length === 0) {
                 addJsonValueField();
+            }
+        } else if (this.value === 'skills') {
+            jsonField.style.display = 'none';
+            skillsField.style.display = 'block';
+            // Add initial skill if none exist
+            if (document.querySelectorAll('.skill-item').length === 0) {
+                addSkillField();
             }
         }
     });
@@ -256,6 +313,83 @@
         addJsonValueField();
     });
 
+    // Function to add a new skill field
+    function addSkillField(name = '', percentage = '', icon = '') {
+        const container = document.getElementById('skillsContainer');
+        const index = skillIndex++;
+        
+        const fieldHtml = `
+            <div class="skill-item p-4 bg-muted/30 rounded-lg border border-border" data-index="${index}">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-foreground mb-2">Skill Name</label>
+                        <input type="text" 
+                               name="skill_names[]" 
+                               value="${name}"
+                               class="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                               placeholder="e.g., Frontend Development"
+                               required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-foreground mb-2">Percentage (0-100)</label>
+                        <input type="number" 
+                               name="skill_percentages[]" 
+                               value="${percentage}"
+                               min="0" 
+                               max="100"
+                               class="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                               placeholder="95"
+                               required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-foreground mb-2">Lucide Icon</label>
+                        <div class="flex gap-2">
+                            <input type="text" 
+                                   name="skill_icons[]" 
+                                   value="${icon}"
+                                   class="flex-1 px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                   placeholder="code-2"
+                                   required>
+                            <button type="button" 
+                                    class="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all"
+                                    onclick="removeSkillField(this)">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <p class="mt-1 text-xs text-muted-foreground">
+                            <a href="https://lucide.dev/icons/" target="_blank" class="text-primary hover:underline">Browse icons</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        container.insertAdjacentHTML('beforeend', fieldHtml);
+        
+        // Re-initialize Lucide icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    // Function to remove a skill field
+    function removeSkillField(button) {
+        const item = button.closest('.skill-item');
+        const container = document.getElementById('skillsContainer');
+        
+        // Keep at least one field
+        if (container.querySelectorAll('.skill-item').length > 1) {
+            item.remove();
+        } else {
+            alert('At least one skill is required.');
+        }
+    }
+
+    // Add skill button click handler
+    document.getElementById('addSkill').addEventListener('click', function() {
+        addSkillField();
+    });
+
     // Image preview
     document.getElementById('image').addEventListener('change', function(e) {
         const file = e.target.files[0];
@@ -303,11 +437,10 @@
             document.getElementById('fileField').style.display = 'block';
             document.querySelector('[name="value"]').closest('div').style.display = 'none';
         } else if (typeSelect.value === 'json') {
-            document.getElementById('jsonFields').style.display = 'block';
+            document.getElementById('jsonTypeSelection').style.display = 'block';
             document.querySelector('[name="value"]').closest('div').style.display = 'none';
-            if (document.querySelectorAll('.json-value-item').length === 0) {
-                addJsonValueField();
-            }
+            // Trigger JSON type change
+            document.getElementById('jsonType').dispatchEvent(new Event('change'));
         }
     });
 </script>

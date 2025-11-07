@@ -6,7 +6,7 @@
                 <h3 class="font-semibold text-lg mb-3">{{ $webSettings->site_name ?? 'Portfolio' }}</h3>
                 <p class="text-muted-foreground text-sm">{{ $webSettings->site_tagline ?? 'Full Stack Developer' }}</p>
             </div>
-            
+
             <!-- Contact Section -->
             <div>
                 <h3 class="font-semibold text-lg mb-3">Contact</h3>
@@ -22,7 +22,7 @@
                     @endif
                 </div>
             </div>
-            
+
             <!-- Social Links -->
             <div>
                 <h3 class="font-semibold text-lg mb-3">Follow Me</h3>
@@ -45,11 +45,16 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="border-t border-border/50 pt-6 text-center">
-            <p class="text-muted-foreground text-sm">
-                © {{ date('Y') }} {{ $webSettings->site_name ?? 'Portfolio' }}. Built with Laravel & TailwindCSS
-            </p>
-        </div>
+    <p class="text-muted-foreground text-sm">
+        © {{ date('Y') }} {{ $webSettings->site_name ?? 'Portfolio' }}.
+        Built with <span class="text-red-500"></span> using Laravel & TailwindCSS.
+    </p>
+    <p class="text-muted-foreground text-sm mt-1">
+        Developed & Designed by <span class="font-semibold text-primary">Qasim Mehmood</span>.
+    </p>
+</div>
+
     </div>
 </footer>
